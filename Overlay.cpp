@@ -10,11 +10,21 @@ static Ref<CCLabelBMFont> s_label = nullptr;
 static int s_lastTps = -1;
 
 void attach(PlayLayer* pl) {
-    s_label = CCLabelBMFont::create(" ", "chatFont.fnt");
-    if (!s_label) return;
+    log::info("[PBuf iOS] Overlay attach called");
+
+    s_label = CCLabelBMFont::create("PBUF TEST", "bigFont.fnt");
+
+    if (!s_label) {
+        log::error("[PBuf iOS] Failed to create overlay label");
+        return;
+    }
+
     s_label->setID("predictive-buffer-overlay"_spr);
     s_label->setZOrder(9999);
     pl->addChild(s_label);
+
+    log::info("[PBuf iOS] Overlay label created");
+
     s_lastTps = -1;
     refresh(pl, true);
 }
