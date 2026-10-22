@@ -1,0 +1,588 @@
+{
+    "geode": "5.11.2",
+    "gd": {
+        "win": "2.2081",
+        "ios": "2.208"
+    },
+    "version": "v2.0.0",
+    "id": "mifu.predictivebuffer",
+    "name": "Predictive Input Buffer",
+    "developers": [
+        "lilWC",
+        "Mifuu"
+    ],
+    "description": "Trajectory-based input buffer with 7 strategies per gamemode: predictive, landing, hybrid, min hold, min gap, grid and debounce.",
+    "tags": [
+        "gameplay",
+        "cheat"
+    ],
+    "settings": {
+        "sec-general": {
+            "type": "title",
+            "name": "General",
+            "description": "Predictive Input Buffer makes tight timings easier by fixing clicks that are a tiny bit too early, too short or would kill you.\n\n**1 tick** = 1/240 s, about 4 ms.\n**4 ticks** = 1 frame at 60 FPS (about 17 ms).\n**8 ticks** = 2 frames, **16 ticks** = 4 frames.\n\nAll windows are in ticks of 1/240 s and are automatically converted to your real TPS.\n\n**Note:** this is an input assist. Use it for practice and fun, not for leaderboard or submitted runs."
+        },
+        "enabled": {
+            "type": "bool",
+            "name": "Enable Buffer",
+            "description": "Master switch. Also toggled with the **Toggle Buffer** keybind (default F7).",
+            "default": true
+        },
+        "preset": {
+            "type": "string",
+            "name": "Preset",
+            "description": "Quick setups. A preset **replaces the strategy of every gamemode** (the windows still come from the window settings below).\n\n**Custom**: use the per-gamemode strategies below.\n**Original v1**: the v1 trajectory buffer everywhere except ship.\n**Classic Input Buffer**: Lyophi's MacOS mod: landing buffer on ground modes, min hold on ship/UFO/swing, grid on wave.\n**Light**: only remembers early clicks before landing / orbs.\n**Balanced**: hybrid on ground modes, predictive on UFO/swing/wave, min hold on ship.\n**Aggressive**: hybrid everywhere, ship included.\n**Consistency**: landing buffer + min hold + wave grid, for the most even timings.",
+            "default": "Custom",
+            "one-of": [
+                "Custom",
+                "Original v1",
+                "Classic Input Buffer",
+                "Light",
+                "Balanced",
+                "Aggressive",
+                "Consistency"
+            ]
+        },
+        "main-window": {
+            "type": "int",
+            "name": "Main Buffer Window (ticks)",
+            "description": "The default window used by every gamemode whose window is **-1**.\n\n**0** = off.\n\n**1 tick** = 1/240 s, about 4 ms.\n**4 ticks** = 1 frame at 60 FPS (about 17 ms).\n**8 ticks** = 2 frames, **16 ticks** = 4 frames.\n\nAll windows are in ticks of 1/240 s and are automatically converted to your real TPS.\n\nThe **Cycle Main Window** keybind (default F6) steps through 2, 4, 8, 16 and Off.",
+            "default": 2,
+            "min": 0,
+            "max": 64,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": true
+            }
+        },
+        "wave-cap": {
+            "type": "int",
+            "name": "Wave Cap (ticks)",
+            "description": "When the wave window is **-1**, it follows the Main Buffer Window but never goes above this value (v1 used 16 / 8). **0** = no cap.",
+            "default": 8,
+            "min": 0,
+            "max": 64,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": false
+            }
+        },
+        "tps": {
+            "type": "int",
+            "name": "TPS (0 = Auto)",
+            "description": "The physics ticks per second your game runs at.\n\n**0 = Auto** (recommended): the mod measures it from the physics step, so TPS bypass from Mega Hack, Eclipse, etc. is detected automatically.\n\nSet a value only if auto-detection is wrong.",
+            "default": 0,
+            "min": 0,
+            "max": 20000,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": false
+            }
+        },
+        "practice-only": {
+            "type": "bool",
+            "name": "Practice Mode Only",
+            "description": "Only buffer inputs while in practice mode.",
+            "default": false
+        },
+        "platformer": {
+            "type": "bool",
+            "name": "Enable in Platformer",
+            "description": "Buffer the jump button in platformer levels too (left/right are never touched).",
+            "default": true
+        },
+        "two-player": {
+            "type": "bool",
+            "name": "Buffer Player 2 (2-Player levels)",
+            "description": "In 2-player levels, buffer player 2's inputs with the same rules as player 1.",
+            "default": true
+        },
+        "sec-ground": {
+            "type": "title",
+            "name": "Ground modes",
+            "description": "Cube, ball, robot and spider."
+        },
+        "cube-strategy": {
+            "type": "string",
+            "name": "Cube Strategy",
+            "description": "How cube inputs are buffered.\n\n**Off**: raw input.\n**Predictive**: simulates your trajectory. If the input would kill you but the same input a few ticks later survives, it is delayed to the earliest safe tick (up to the window).\n**Landing Buffer**: a click made slightly before landing or before an orb is remembered and fired the moment you touch the ground or orb (if you already let go).\n**Hybrid**: Landing Buffer for early clicks + Predictive for the rest.\n**Grid Snap**: every press and release waits for the next line of a fixed N-tick grid. Very consistent, adds up to N ticks of delay.\n**Debounce**: a press that comes less than N ticks after a release is ignored (fixes double clicks from worn switches).",
+            "default": "Hybrid",
+            "one-of": [
+                "Off",
+                "Predictive",
+                "Landing Buffer",
+                "Hybrid",
+                "Grid Snap",
+                "Debounce"
+            ]
+        },
+        "cube-window": {
+            "type": "int",
+            "name": "Cube Window (ticks)",
+            "description": "Strength of the cube strategy.\n\n**-1** = Main Buffer Window\n**0** = off\n**1+** = your own value\n\nPredictive: max delay. Landing: how early a click is remembered. Min Hold / Min Gap / Grid / Debounce: their length.",
+            "default": -1,
+            "min": -1,
+            "max": 64,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": false
+            }
+        },
+        "ball-strategy": {
+            "type": "string",
+            "name": "Ball Strategy",
+            "description": "How ball inputs are buffered.\n\n**Off**: raw input.\n**Predictive**: simulates your trajectory. If the input would kill you but the same input a few ticks later survives, it is delayed to the earliest safe tick (up to the window).\n**Landing Buffer**: a click made slightly before landing or before an orb is remembered and fired the moment you touch the ground or orb (if you already let go).\n**Hybrid**: Landing Buffer for early clicks + Predictive for the rest.\n**Grid Snap**: every press and release waits for the next line of a fixed N-tick grid. Very consistent, adds up to N ticks of delay.\n**Debounce**: a press that comes less than N ticks after a release is ignored (fixes double clicks from worn switches).",
+            "default": "Hybrid",
+            "one-of": [
+                "Off",
+                "Predictive",
+                "Landing Buffer",
+                "Hybrid",
+                "Grid Snap",
+                "Debounce"
+            ]
+        },
+        "ball-window": {
+            "type": "int",
+            "name": "Ball Window (ticks)",
+            "description": "Strength of the ball strategy.\n\n**-1** = Main Buffer Window\n**0** = off\n**1+** = your own value\n\nPredictive: max delay. Landing: how early a click is remembered. Min Hold / Min Gap / Grid / Debounce: their length.",
+            "default": -1,
+            "min": -1,
+            "max": 64,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": false
+            }
+        },
+        "robot-strategy": {
+            "type": "string",
+            "name": "Robot Strategy",
+            "description": "How robot inputs are buffered.\n\n**Off**: raw input.\n**Predictive**: simulates your trajectory. If the input would kill you but the same input a few ticks later survives, it is delayed to the earliest safe tick (up to the window).\n**Landing Buffer**: a click made slightly before landing or before an orb is remembered and fired the moment you touch the ground or orb (if you already let go).\n**Hybrid**: Landing Buffer for early clicks + Predictive for the rest (releases included, robot jump height depends on them).\n**Min Hold**: a very quick tap is (robot: minimum jump height) stretched to last at least N ticks.\n**Grid Snap**: every press and release waits for the next line of a fixed N-tick grid. Very consistent, adds up to N ticks of delay.\n**Debounce**: a press that comes less than N ticks after a release is ignored (fixes double clicks from worn switches).",
+            "default": "Hybrid",
+            "one-of": [
+                "Off",
+                "Predictive",
+                "Landing Buffer",
+                "Hybrid",
+                "Min Hold",
+                "Grid Snap",
+                "Debounce"
+            ]
+        },
+        "robot-window": {
+            "type": "int",
+            "name": "Robot Window (ticks)",
+            "description": "Strength of the robot strategy.\n\n**-1** = Main Buffer Window\n**0** = off\n**1+** = your own value\n\nPredictive: max delay. Landing: how early a click is remembered. Min Hold / Min Gap / Grid / Debounce: their length.",
+            "default": -1,
+            "min": -1,
+            "max": 64,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": false
+            }
+        },
+        "spider-strategy": {
+            "type": "string",
+            "name": "Spider Strategy",
+            "description": "How spider inputs are buffered.\n\n**Off**: raw input.\n**Predictive**: simulates your trajectory. If the input would kill you but the same input a few ticks later survives, it is delayed to the earliest safe tick (up to the window).\n**Landing Buffer**: a click made slightly before landing or before an orb is remembered and fired the moment you touch the ground or orb (if you already let go).\n**Hybrid**: Landing Buffer for early clicks + Predictive for the rest.\n**Grid Snap**: every press and release waits for the next line of a fixed N-tick grid. Very consistent, adds up to N ticks of delay.\n**Debounce**: a press that comes less than N ticks after a release is ignored (fixes double clicks from worn switches).",
+            "default": "Hybrid",
+            "one-of": [
+                "Off",
+                "Predictive",
+                "Landing Buffer",
+                "Hybrid",
+                "Grid Snap",
+                "Debounce"
+            ]
+        },
+        "spider-window": {
+            "type": "int",
+            "name": "Spider Window (ticks)",
+            "description": "Strength of the spider strategy.\n\n**-1** = Main Buffer Window\n**0** = off\n**1+** = your own value\n\nPredictive: max delay. Landing: how early a click is remembered. Min Hold / Min Gap / Grid / Debounce: their length.",
+            "default": -1,
+            "min": -1,
+            "max": 64,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": false
+            }
+        },
+        "sec-fly": {
+            "type": "title",
+            "name": "Flying modes",
+            "description": "Ship, UFO, wave and swing."
+        },
+        "ship-strategy": {
+            "type": "string",
+            "name": "Ship Strategy",
+            "description": "How ship inputs are buffered.\n\n**Off**: raw input.\n**Predictive**: simulates your trajectory. If the input would kill you but the same input a few ticks later survives, it is delayed to the earliest safe tick (up to the window).\n**Hybrid**: Predictive + Min Hold (lethal inputs are delayed and quick taps are stretched).\n**Min Hold**: a very quick tap is stretched to last at least N ticks.\n**Min Gap**: after a release, the next press waits at least N ticks.\n**Grid Snap**: every press and release waits for the next line of a fixed N-tick grid. Very consistent, adds up to N ticks of delay.\n**Debounce**: a press that comes less than N ticks after a release is ignored (fixes double clicks from worn switches).",
+            "default": "Off",
+            "one-of": [
+                "Off",
+                "Predictive",
+                "Min Hold",
+                "Min Gap",
+                "Hybrid",
+                "Grid Snap",
+                "Debounce"
+            ]
+        },
+        "ship-window": {
+            "type": "int",
+            "name": "Ship Window (ticks)",
+            "description": "Strength of the ship strategy.\n\n**-1** = Main Buffer Window\n**0** = off\n**1+** = your own value\n\nPredictive: max delay. Landing: how early a click is remembered. Min Hold / Min Gap / Grid / Debounce: their length.",
+            "default": -1,
+            "min": -1,
+            "max": 64,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": false
+            }
+        },
+        "ufo-strategy": {
+            "type": "string",
+            "name": "UFO Strategy",
+            "description": "How ufo inputs are buffered.\n\n**Off**: raw input.\n**Predictive**: simulates your trajectory. If the input would kill you but the same input a few ticks later survives, it is delayed to the earliest safe tick (up to the window).\n**Hybrid**: Predictive + Min Hold (lethal inputs are delayed and quick taps are stretched).\n**Min Hold**: a very quick tap is stretched to last at least N ticks.\n**Min Gap**: after a release, the next press waits at least N ticks.\n**Grid Snap**: every press and release waits for the next line of a fixed N-tick grid. Very consistent, adds up to N ticks of delay.\n**Debounce**: a press that comes less than N ticks after a release is ignored (fixes double clicks from worn switches).",
+            "default": "Predictive",
+            "one-of": [
+                "Off",
+                "Predictive",
+                "Min Hold",
+                "Min Gap",
+                "Hybrid",
+                "Grid Snap",
+                "Debounce"
+            ]
+        },
+        "ufo-window": {
+            "type": "int",
+            "name": "UFO Window (ticks)",
+            "description": "Strength of the ufo strategy.\n\n**-1** = Main Buffer Window\n**0** = off\n**1+** = your own value\n\nPredictive: max delay. Landing: how early a click is remembered. Min Hold / Min Gap / Grid / Debounce: their length.",
+            "default": -1,
+            "min": -1,
+            "max": 64,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": false
+            }
+        },
+        "wave-strategy": {
+            "type": "string",
+            "name": "Wave Strategy",
+            "description": "How wave inputs are buffered.\n\n**Off**: raw input.\n**Predictive**: simulates your trajectory. If the input would kill you but the same input a few ticks later survives, it is delayed to the earliest safe tick (up to the window).\n**Hybrid**: Predictive + Min Hold (lethal inputs are delayed and quick taps are stretched).\n**Min Hold**: a very quick tap is stretched to last at least N ticks.\n**Min Gap**: after a release, the next press waits at least N ticks.\n**Grid Snap**: every press and release waits for the next line of a fixed N-tick grid. Very consistent, adds up to N ticks of delay.\n**Debounce**: a press that comes less than N ticks after a release is ignored (fixes double clicks from worn switches).",
+            "default": "Predictive",
+            "one-of": [
+                "Off",
+                "Predictive",
+                "Min Hold",
+                "Min Gap",
+                "Hybrid",
+                "Grid Snap",
+                "Debounce"
+            ]
+        },
+        "wave-window": {
+            "type": "int",
+            "name": "Wave Window (ticks)",
+            "description": "Strength of the wave strategy.\n\n**-1** = Main Buffer Window (capped by Wave Cap)\n**0** = off\n**1+** = your own value\n\nPredictive: max delay. Landing: how early a click is remembered. Min Hold / Min Gap / Grid / Debounce: their length.",
+            "default": -1,
+            "min": -1,
+            "max": 64,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": false
+            }
+        },
+        "swing-strategy": {
+            "type": "string",
+            "name": "Swing Strategy",
+            "description": "How swing inputs are buffered.\n\n**Off**: raw input.\n**Predictive**: simulates your trajectory. If the input would kill you but the same input a few ticks later survives, it is delayed to the earliest safe tick (up to the window).\n**Hybrid**: Predictive + Min Hold (lethal inputs are delayed and quick taps are stretched).\n**Min Hold**: a very quick tap is stretched to last at least N ticks.\n**Min Gap**: after a release, the next press waits at least N ticks.\n**Grid Snap**: every press and release waits for the next line of a fixed N-tick grid. Very consistent, adds up to N ticks of delay.\n**Debounce**: a press that comes less than N ticks after a release is ignored (fixes double clicks from worn switches).",
+            "default": "Predictive",
+            "one-of": [
+                "Off",
+                "Predictive",
+                "Min Hold",
+                "Min Gap",
+                "Hybrid",
+                "Grid Snap",
+                "Debounce"
+            ]
+        },
+        "swing-window": {
+            "type": "int",
+            "name": "Swing Window (ticks)",
+            "description": "Strength of the swing strategy.\n\n**-1** = Main Buffer Window\n**0** = off\n**1+** = your own value\n\nPredictive: max delay. Landing: how early a click is remembered. Min Hold / Min Gap / Grid / Debounce: their length.",
+            "default": -1,
+            "min": -1,
+            "max": 64,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": false
+            }
+        },
+        "sec-pred": {
+            "type": "title",
+            "name": "Predictive tuning",
+            "description": "Settings of the trajectory simulation used by Predictive and Hybrid."
+        },
+        "predict-releases": {
+            "type": "bool",
+            "name": "Predict Releases",
+            "description": "Also delay lethal **releases** in wave and robot (the only modes where a release changes the trajectory).",
+            "default": true
+        },
+        "horizon-ground": {
+            "type": "int",
+            "name": "Lookahead: Ground/Air (ticks)",
+            "description": "How far ahead the trajectory is checked for non-wave modes. Longer = sees more, costs more CPU per click. v1: 160.",
+            "default": 160,
+            "min": 20,
+            "max": 400,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": false
+            }
+        },
+        "horizon-wave": {
+            "type": "int",
+            "name": "Lookahead: Wave (ticks)",
+            "description": "Lookahead for the big wave. v1: 65.",
+            "default": 65,
+            "min": 10,
+            "max": 300,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": false
+            }
+        },
+        "horizon-mini-wave": {
+            "type": "int",
+            "name": "Lookahead: Mini Wave (ticks)",
+            "description": "Lookahead for the mini wave. v1: 50.",
+            "default": 50,
+            "min": 10,
+            "max": 300,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": false
+            }
+        },
+        "strictness": {
+            "type": "string",
+            "name": "Strictness",
+            "description": "How much a delayed input must gain before it is used.\n\n**Strict**: only buffers when the delay clearly clears the obstacle.\n**Normal**: v1 behaviour.\n**Loose**: buffers more often.",
+            "default": "Normal",
+            "one-of": [
+                "Strict",
+                "Normal",
+                "Loose"
+            ]
+        },
+        "spam-guard": {
+            "type": "bool",
+            "name": "Spam Guard",
+            "description": "When you spam quickly (see below), the predictive buffer steps aside so fast wave spam stays 100% raw. Isolated micro-clicks stay protected.",
+            "default": true
+        },
+        "spam-guard-all": {
+            "type": "bool",
+            "name": "Spam Guard on All Modes",
+            "description": "Apply the spam guard to every gamemode instead of only wave.",
+            "default": false,
+            "enable-if": "spam-guard"
+        },
+        "spam-interval": {
+            "type": "int",
+            "name": "Spam Interval (ticks)",
+            "description": "Two inputs closer than this count as spam. v1: 8.",
+            "default": 8,
+            "min": 1,
+            "max": 64,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": false
+            },
+            "enable-if": "spam-guard"
+        },
+        "spam-streak": {
+            "type": "int",
+            "name": "Spam Streak",
+            "description": "Number of consecutive spam inputs before the buffer steps aside. v1: 3.",
+            "default": 3,
+            "min": 1,
+            "max": 20,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": false
+            },
+            "enable-if": "spam-guard"
+        },
+        "lethal-filter": {
+            "type": "bool",
+            "name": "Lethal Input Filter",
+            "description": "**Strong assist.** If an input kills you whatever the delay, but NOT doing it survives the whole lookahead, the input is ignored (until you let go / press again).\n\nOff by default.",
+            "default": false
+        },
+        "sec-landing": {
+            "type": "title",
+            "name": "Landing buffer"
+        },
+        "landing-orbs": {
+            "type": "bool",
+            "name": "Fire on Orbs",
+            "description": "An early click is also fired when you touch an orb, not only the ground.",
+            "default": true
+        },
+        "sec-overlay": {
+            "type": "title",
+            "name": "Overlay and feedback"
+        },
+        "overlay": {
+            "type": "bool",
+            "name": "Show Overlay",
+            "description": "Small status line while playing: gamemode, strategy, window, TPS and saved inputs.",
+            "default": true
+        },
+        "overlay-position": {
+            "type": "string",
+            "name": "Overlay Position",
+            "description": "Corner of the overlay.",
+            "default": "Bottom Left",
+            "one-of": [
+                "Top Left",
+                "Top Right",
+                "Bottom Left",
+                "Bottom Right"
+            ],
+            "enable-if": "overlay"
+        },
+        "overlay-scale": {
+            "type": "float",
+            "name": "Overlay Scale",
+            "description": "Size of the overlay text.",
+            "default": 0.45,
+            "min": 0.2,
+            "max": 1.0,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "arrow-step": 0.05,
+                "slider": true,
+                "slider-step": 0.05
+            },
+            "enable-if": "overlay"
+        },
+        "overlay-opacity": {
+            "type": "int",
+            "name": "Overlay Opacity",
+            "description": "0 = invisible, 255 = opaque.",
+            "default": 200,
+            "min": 0,
+            "max": 255,
+            "control": {
+                "input": true,
+                "arrows": true,
+                "slider": true
+            },
+            "enable-if": "overlay"
+        },
+        "overlay-flash": {
+            "type": "bool",
+            "name": "Flash on Save",
+            "description": "The overlay flashes cyan every time an input is saved by the buffer.",
+            "default": true,
+            "enable-if": "overlay"
+        },
+        "notify-hotkeys": {
+            "type": "bool",
+            "name": "Hotkey Notifications",
+            "description": "Show a small notification when a keybind changes a setting.",
+            "default": true
+        },
+        "sec-keys": {
+            "type": "title",
+            "name": "Keybinds",
+            "description": "Only active while playing a level. Rebind them here or in Geode's keybind menu."
+        },
+        "key-toggle": {
+            "type": "keybind",
+            "name": "Toggle Buffer",
+            "description": "Turns the whole buffer on / off.",
+            "default": "F7",
+            "category": "gameplay"
+        },
+        "key-cycle-window": {
+            "type": "keybind",
+            "name": "Cycle Main Window",
+            "description": "Steps the Main Buffer Window through 2, 4, 8, 16 ticks and Off.",
+            "default": "F6",
+            "category": "gameplay"
+        },
+        "key-cycle-strategy": {
+            "type": "keybind",
+            "name": "Cycle Strategy (current gamemode)",
+            "description": "Switches the strategy of the gamemode you are currently in (Custom preset only).",
+            "default": "F10",
+            "category": "gameplay"
+        },
+        "key-cycle-preset": {
+            "type": "keybind",
+            "name": "Cycle Preset",
+            "description": "Steps through the presets.",
+            "default": [],
+            "category": "gameplay"
+        },
+        "key-overlay": {
+            "type": "keybind",
+            "name": "Toggle Overlay",
+            "description": "Shows / hides the overlay.",
+            "default": "F8",
+            "category": "gameplay"
+        },
+        "key-debug": {
+            "type": "keybind",
+            "name": "Toggle Debug Logging",
+            "description": "Turns debug logging on / off.",
+            "default": "F9",
+            "category": "gameplay"
+        },
+        "sec-debug": {
+            "type": "title",
+            "name": "Debug"
+        },
+        "log-saves": {
+            "type": "bool",
+            "name": "Log Saved Inputs",
+            "description": "Writes every saved input to the Geode log (\"*** SAVED +N TICKS ... ***\").",
+            "default": true
+        },
+        "console": {
+            "type": "bool",
+            "name": "Live Console Window",
+            "description": "Opens the v1 live console window (Windows console) showing saved inputs as they happen.",
+            "default": false
+        },
+        "debug": {
+            "type": "bool",
+            "name": "Debug Logging",
+            "description": "Very verbose logs of every queued / injected input. Leave off for normal play.",
+            "default": false
+        }
+    }
+}
