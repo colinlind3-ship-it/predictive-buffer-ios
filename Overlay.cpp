@@ -9,6 +9,7 @@ namespace pbuf::overlay {
 static Ref<CCLabelBMFont> s_label = nullptr;
 static int s_lastTps = -1;
 
+
 void attach(PlayLayer* pl) {
     log::info("[PBuf iOS] Overlay attach called");
 
@@ -18,6 +19,17 @@ void attach(PlayLayer* pl) {
         log::error("[PBuf iOS] Failed to create overlay label");
         return;
     }
+
+    s_label->setID("predictive-buffer-overlay"_spr);
+    s_label->setZOrder(9999);
+    pl->addChild(s_label);
+
+    log::info("[PBuf iOS] Overlay label created");
+
+    s_lastTps = -1;
+    refresh(pl, true);
+}
+
 
     s_label->setID("predictive-buffer-overlay"_spr);
     s_label->setZOrder(9999);
