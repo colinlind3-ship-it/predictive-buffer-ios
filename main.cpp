@@ -134,6 +134,7 @@ class $modify(BufPlayLayer, PlayLayer) {
 
     bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
         if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
+        log::info("[PBuf iOS] PlayLayer init hook reached");
         predictor().init(this);
         engine().onLevelStart();
         overlay::attach(this);
