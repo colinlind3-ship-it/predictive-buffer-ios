@@ -267,7 +267,25 @@ class $modify(BufBaseGameLayer, GJBaseGameLayer) {
         return GJBaseGameLayer::canBeActivatedByPlayer(player, object);
     }
 
-    void handleButton(bool down, int button, bool isPlayer1) {
+    
+void handleButton(bool down, int button, bool isPlayer1) {
+    log::info(
+        "[PBuf iOS] handleButton: down={}, button={}, player1={}",
+        down, button, isPlayer1
+    );
+
+    if (button == 1 && !predictor().isSimulating() && !engine().isInjecting()) {
+        log::info("[PBuf iOS] Sending input to engine");
+
+        if (engine().onInput(this, down, isPlayer1)) {
+            log::info("[PBuf iOS] Input queued");
+            return;
+        }
+    }
+
+    GJBaseGameLayer::handleButton(down, button, isPlayer1);
+}
+ {
         if (button == 1 && !predictor().isSimulating() && !engine().isInjecting()) {
             if (engine().onInput(this, down, isPlayer1)) return;
         }
