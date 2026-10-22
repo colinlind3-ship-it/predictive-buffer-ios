@@ -23,6 +23,31 @@ jobs:
           bindings: vwtfafa/bindings
           bindings-ref: fix/2.2081-depends
 
+      - name: Ad-hoc sign iOS dylib
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for package in output/*.geode; do
+            work="$(mktemp -d)"
+            unzip -q "$package" -d "$work"
+
+            dylib="$(find "$work" -type f -name '*.ios.dylib' -print -quit)"
+
+            if [ -z "$dylib" ]; then
+              echo "::error::No iOS dylib found in $package"
+              exit 1
+            fi
+
+            codesign --force --sign - "$dylib"
+            codesign --verify --verbose "$dylib"
+
+            signed_package="$RUNNER_TEMP/$(basename "$package")"
+            (cd "$work" && zip -qr "$signed_package" .)
+            mv "$signed_package" "$package"
+            rm -rf "$work"
+          done
+
       - name: Upload iOS mod
         uses: actions/upload-artifact@v4
         with:
