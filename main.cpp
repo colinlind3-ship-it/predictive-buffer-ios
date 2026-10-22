@@ -285,12 +285,6 @@ void handleButton(bool down, int button, bool isPlayer1) {
 
     GJBaseGameLayer::handleButton(down, button, isPlayer1);
 }
- {
-        if (button == 1 && !predictor().isSimulating() && !engine().isInjecting()) {
-            if (engine().onInput(this, down, isPlayer1)) return;
-        }
-        GJBaseGameLayer::handleButton(down, button, isPlayer1);
-    }
 
     void processCommands(float dt, bool isHalfTick, bool isLastTick) {
         engine().beginStep(this);
